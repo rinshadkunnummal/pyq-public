@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PaperStatus {
+  pending
+  approved
+  rejected
+}
+
+model Paper {
+  id           String      @id @default(cuid())
+  stage        String
+  level        String
+  subject      String
+  examType     String
+  paperYear    Int
+  pdfUrl       String
+  uploaderName String?
+  status       PaperStatus @default(pending)
+  adminNote    String?
+  createdAt    DateTime    @default(now())
+  approvedAt   DateTime?
+}
