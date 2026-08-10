@@ -10,7 +10,6 @@ interface PaperCardProps {
 }
 
 function PaperCard({ subject, stage, level, examType, paperYear, pdfUrl }: PaperCardProps) {
-  const viewUrl = pdfUrl.replace("/upload/fl_attachment/", "/upload/");
   const downloadUrl = pdfUrl.includes("fl_attachment")
     ? pdfUrl
     : pdfUrl.replace("/upload/", "/upload/fl_attachment/");
