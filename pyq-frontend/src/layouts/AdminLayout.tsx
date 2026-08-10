@@ -1,41 +1,106 @@
-import { Link, Outlet, useNavigate } from "react-router-dom";
-import { useAuth } from "../auth/AuthContext";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom"
+import { useAuth } from "../auth/AuthContext"
 
-function AdminLayout() {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { LayoutDashboard, FileClock, CheckCircle2, LogOut, Files } from "lucide-react"
+
+export default function AdminLayout() {
+  const { logout } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
 
   const handleLogout = () => {
-    logout();
-    navigate("/admin/login");
-  };
+    logout()
+    navigate("/admin/login")
+  }
+
+  const navItems = [
+    {
+      label: "Files",
+      href: "/admin/adminpapers",
+      icon: Files,
+    },
+    {
+      label: "Pending",
+      href: "/admin",
+      icon: FileClock,
+    },
+    {
+      label: "Approved",
+      href: "/admin/approved",
+      icon: CheckCircle2,
+    },
+  ]
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <header className="border-b border-zinc-800">
-        <nav className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <Link to="/admin" className="text-lg font-semibold tracking-tight">
-            PyQ <span className="text-zinc-500 font-normal">Admin</span>
-          </Link>
-          <div className="flex items-center gap-6 text-sm font-medium">
-            <Link to="/admin" className="text-zinc-400 hover:text-white transition-colors">
-              Pending
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="rounded-md bg-zinc-800 px-3 py-1.5 text-zinc-200 hover:bg-zinc-700 transition-colors"
-            >
-              Log out
-            </button>
+    <div className="min-h-screen bg-background">
+      {/* Top Bar */}
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <LayoutDashboard className="h-4 w-4" />
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold">PyQ Admin</h1>
+              <p className="text-xs text-muted-foreground">
+                Previous Question Papers
+              </p>
+            </div>
           </div>
-        </nav>
+
+          <Button variant="outline" size="sm" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Log out
+          </Button>
+        </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-6 py-10">
-        <Outlet />
-      </main>
-    </div>
-  );
-}
+      {/* Body */}
+      <div className="mx-auto flex max-w-7xl gap-6 px-6 py-6">
+        {/* Sidebar */}
+        <aside className="hidden w-64 shrink-0 md:block">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Navigation</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-1">
+              {navItems.map((item) => {
+                const Icon = item.icon
+                const active = location.pathname === item.href
 
-export default AdminLayout;
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                      active
+                        ? "bg-primary text-primary-foreground"
+                        : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                )
+              })}
+
+              <Separator className="my-3" />
+
+              <p className="text-xs text-muted-foreground">
+                Review and publish uploaded question papers.
+              </p>
+            </CardContent>
+          </Card>
+        </aside>
+
+        {/* Main */}
+        <main className="min-w-0 flex-1">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  )
+}

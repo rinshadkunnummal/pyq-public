@@ -6,8 +6,9 @@ import Home from "./pages/student/Home";
 import Submit from "./pages/student/Submit";
 import Login from "./pages/admin/Login";
 import Papers from "./pages/student/Papers";
+import Approved from "./pages/admin/Approved"
 import Pending from "./pages/admin/Pending";
-import PaperReview from "./pages/admin/PaperReview";
+import AdminPapers from "./pages/admin/AdminPapers";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -30,7 +31,8 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute />,
         children: [
           { index: true, element: <Pending /> },
-          { path: "papers/:id", element: <PaperReview /> },
+          { path: "adminpapers", element: <AdminPapers /> },
+          { path: "approved", element: <Approved /> },
         ],
       },
     ],
