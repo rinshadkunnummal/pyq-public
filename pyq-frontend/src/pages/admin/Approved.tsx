@@ -1,22 +1,15 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
-import { API_URL } from "@/lib/api"
+import { API_URL } from "../../lib/api"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Badge } from "../../components/ui/badge"
+import { Input } from "../../components/ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover"
+import { RadioGroup, RadioGroupItem } from "../../components/ui/radio-group"
+import { Label } from "../../components/ui/label"
+import { Separator } from "../../components/ui/separator"
+import { Button } from "../../components/ui/button"
 
 import {
     CheckCircle2,
@@ -109,14 +102,6 @@ export default function AdminApproved() {
             )
         })
     }, [papers, query, stageFilter, levelFilter, examTypeFilter, yearFilter])
-
-    const clearFilters = () => {
-        setQuery("")
-        setStageFilter("all")
-        setLevelFilter("all")
-        setExamTypeFilter("all")
-        setYearFilter("all")
-    }
 
     return (
         <div className="space-y-6">

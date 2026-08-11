@@ -1,9 +1,9 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "../auth/AuthContext"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
+import { Button } from "../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { Separator } from "../components/ui/separator"
 import { LayoutDashboard, FileClock, CheckCircle2, LogOut, Files } from "lucide-react"
 
 export default function AdminLayout() {
@@ -18,13 +18,18 @@ export default function AdminLayout() {
 
   const navItems = [
     {
-      label: "Files",
-      href: "/admin/adminpapers",
+      label: "Dashboard",
+      href: "/admin",
+      icon: LayoutDashboard,
+    },
+    {
+      label: "Papers",
+      href: "/admin/papers",
       icon: Files,
     },
     {
       label: "Pending",
-      href: "/admin",
+      href: "/admin/pending",
       icon: FileClock,
     },
     {

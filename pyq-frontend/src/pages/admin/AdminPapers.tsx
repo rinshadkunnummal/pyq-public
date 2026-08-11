@@ -1,17 +1,16 @@
 import { useEffect, useMemo, useState } from "react"
-import { Link } from "react-router-dom"
-import { API_URL } from "@/lib/api"
+import { API_URL } from "../../lib/api"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "../../components/ui/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
+} from "../../components/ui/card"
+import { Input } from "../../components/ui/input"
+import { Badge } from "../../components/ui/badge"
 import {
   Table,
   TableBody,
@@ -19,7 +18,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "../../components/ui/table"
 import { Search, ExternalLink, CheckCircle2, Clock3 } from "lucide-react"
 
 interface Paper {

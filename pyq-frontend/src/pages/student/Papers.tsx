@@ -176,7 +176,7 @@ export default function Papers() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-[60vh]">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="flex items-center gap-3 mb-2">

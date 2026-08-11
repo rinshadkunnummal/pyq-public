@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { API_URL } from "@/lib/api"
+import { API_URL } from "../../lib/api"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Badge } from "../../components/ui/badge"
 import { CheckCircle2, Eye, Loader2 } from "lucide-react"
 
 interface Paper {
