@@ -6,6 +6,7 @@ import Home from "./pages/student/Home";
 import Submit from "./pages/student/Submit";
 import About from "./pages/student/About";
 import Login from "./pages/admin/Login";
+import ClassPage from "./pages/student/ClassPage";
 import Papers from "./pages/student/Papers";
 import Approved from "./pages/admin/Approved"
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -20,6 +21,7 @@ export const router = createBrowserRouter([
     element: <StudentLayout />,
     children: [
       { index: true, element: <Home /> },
+      { path: "/exam/:exam", element: <ClassPage />,},
       { path: "submit", element: <Submit /> },
       { path: "papers", element: <Papers /> },
       { path: "about", element: <About /> }

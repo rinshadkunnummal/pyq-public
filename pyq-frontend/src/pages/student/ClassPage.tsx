@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useParams } from "react-router-dom"
 import { Folder } from "lucide-react"
 
 import { Card, CardContent } from "../../components/ui/card"
 import { Skeleton } from "../../components/ui/skeleton"
 
-type Exam = {
+type ClassLevel = {
   id: string
   name: string
   slug: string
@@ -13,16 +13,18 @@ type Exam = {
 
 const API = import.meta.env.VITE_API_URL || "https://special-space-umbrella-v67vvq5prw5hpqjg-3000.app.github.dev"
 
-export default function Home() {
-  const [exams, setExams] = useState<Exam[]>([])
+export default function ClassPage() {
+  const { exam } = useParams()
+
+  const [classes, setClasses] = useState<ClassLevel[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`${API}/api/admin/exams`)
+        const res = await fetch(`${API}/api/admin/classes?exam=${exam}`)
         const data = await res.json()
-        setExams(data)
+        setClasses(data)
       } catch (error) {
         console.error(error)
       } finally {
@@ -31,30 +33,36 @@ export default function Home() {
     }
 
     load()
-  }, [])
+  }, [exam])
 
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Question Bank
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Select an exam category to browse classes, subjects, and papers.
-          </p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight capitalize">
+              {exam?.replace("-", " ")}
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Select a class to browse subjects.
+            </p>
+          </div>
+
+          <a>
+            <Link to="/">Back</Link>
+          </a>
         </div>
 
         {loading ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 2 }).map((_, i) => (
+            {Array.from({ length: 6 }).map((_, i) => (
               <Card key={i}>
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
                     <Skeleton className="h-10 w-10 rounded-md" />
                     <div className="space-y-2 flex-1">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-3 w-20" />
                     </div>
                   </div>
                 </CardContent>
@@ -63,8 +71,12 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {exams.map((exam) => (
-              <Link key={exam.id} to={`/exam/${exam.slug}`} className="group">
+            {classes.map((cls) => (
+              <Link
+                key={cls.id}
+                to={`/exam/${exam}/${cls.slug}`}
+                className="group"
+              >
                 <Card className="transition-all hover:border-primary hover:shadow-md">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-4">
@@ -73,9 +85,9 @@ export default function Home() {
                       </div>
 
                       <div>
-                        <h2 className="font-semibold">{exam.name}</h2>
+                        <h2 className="font-semibold">{cls.name}</h2>
                         <p className="text-sm text-muted-foreground">
-                          Open folder
+                          Open class
                         </p>
                       </div>
                     </div>

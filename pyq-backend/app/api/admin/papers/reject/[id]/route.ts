@@ -11,7 +11,7 @@ export async function PATCH(
     const paper = await prisma.paper.update({
       where: { id },
       data: {
-        status: 'rejected',
+        status: 'REJECTED',
       },
     })
 
