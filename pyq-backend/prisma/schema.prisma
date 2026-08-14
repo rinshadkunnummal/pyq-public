@@ -4,25 +4,67 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-enum PaperStatus {
-  pending
-  approved
-  rejected
+model ExamType {
+  id        String       @id @default(cuid())
+  slug      String       @unique
+  name      String
+  classes   ClassLevel[]
+  createdAt DateTime     @default(now())
+}
+
+model ClassLevel {
+  id         String      @id @default(cuid())
+  slug       String
+  label      String
+
+  examType   ExamType    @relation(fields: [examTypeId], references: [id], onDelete: Cascade)
+  examTypeId String
+
+  subjects   Subject[]
+
+  @@unique([examTypeId, slug])
+  @@index([examTypeId])
+}
+
+model Subject {
+  id           String      @id @default(cuid())
+  code         String
+  name         String
+
+  classLevel   ClassLevel  @relation(fields: [classLevelId], references: [id], onDelete: Cascade)
+  classLevelId String
+
+  papers       Paper[]
+
+  @@unique([classLevelId, code])
+  @@index([classLevelId])
 }
 
 model Paper {
-  id           String      @id @default(cuid())
-  stage        String
-  level        String
-  subject      String
-  examType     String
-  paperYear    Int
-  pdfUrl       String
-  uploaderName String?
-  status       PaperStatus @default(pending)
-  adminNote    String?
-  createdAt    DateTime    @default(now())
-  approvedAt   DateTime?
+  id         String      @id @default(cuid())
+  title      String
+  examYear   Int
+  pdfUrl     String
+  fileSize   Int?
+  status     PaperStatus @default(PENDING)
+
+  subject     Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subjectId   String
+
+  uploadedBy  String?
+  approvedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([subjectId])
+  @@index([status])
+}
+
+enum PaperStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }

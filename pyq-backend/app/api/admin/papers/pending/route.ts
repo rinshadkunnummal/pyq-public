@@ -1,14 +1,24 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '../../../../../src/lib/prisma'
+import { PaperStatus } from '@prisma/client'
 
 export async function GET() {
   const papers = await prisma.paper.findMany({
     where: {
-      status: 'pending',
+      status: PaperStatus.PENDING,
     },
-    orderBy: {
-      createdAt: 'desc',
+    include: {
+      subject: {
+        include: {
+          classLevel: {
+            include: {
+              examType: true,
+            },
+          },
+        },
+      },
     },
+    orderBy: { createdAt: 'desc' },
   })
 
   return NextResponse.json(papers)

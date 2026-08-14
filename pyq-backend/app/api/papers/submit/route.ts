@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/src/lib/prisma'
 
 export function GET() {
   return NextResponse.json({ message: 'Use POST to submit a paper' })
