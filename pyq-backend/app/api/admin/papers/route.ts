@@ -11,10 +11,9 @@ export async function GET() {
 
     return NextResponse.json(papers)
   } catch (error) {
-    console.error("Failed to fetch admin papers:", error)
-
+    console.error(error)
     return NextResponse.json(
-      { error: "Failed to fetch papers" },
+      { error: "Failed to fetch admin papers" },
       { status: 500 }
     )
   }
