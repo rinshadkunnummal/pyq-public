@@ -2,33 +2,32 @@ import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { Folder } from "lucide-react"
 import Breadcrumbs from '../../components/Breadcrumbs'
+
 import { Card, CardContent } from "../../components/ui/card"
 import { Skeleton } from "../../components/ui/skeleton"
 
-type ClassLevel = {
+type Subject = {
   id: string
   name: string
-  slug: string
+  code: string
 }
 
-const API = import.meta.env.VITE_API_URL || "https://special-space-umbrella-v67vvq5prw5hpqjg-3000.app.github.dev"
+const API = import.meta.env.VITE_API_URL || "http://localhost:3000"
 
-export default function ClassPage() {
-  const { exam } = useParams()
+export default function SubjectPage() {
+  const { exam, class: classSlug } = useParams()
 
-  const [classes, setClasses] = useState<ClassLevel[]>([])
+  const [subjects, setSubjects] = useState<Subject[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`${API}/api/admin/classes?exam=${exam}`)
-        const data: ClassLevel[] = await res.json()
-
-        data.sort((a, b) => Number(a.slug) - Number(b.slug))
-
-        setClasses(data)
-        setClasses(data)
+        const res = await fetch(
+          `${API}/api/admin/subjects?exam=${exam}&class=${classSlug}`
+        )
+        const data = await res.json()
+        setSubjects(data)
       } catch (error) {
         console.error(error)
       } finally {
@@ -37,7 +36,7 @@ export default function ClassPage() {
     }
 
     load()
-  }, [exam])
+  }, [exam, classSlug])
 
   return (
     <div className="min-h-screen bg-background">
@@ -47,20 +46,24 @@ export default function ClassPage() {
             <Breadcrumbs
               items={[
                 { label: 'Home', href: '/' },
-                { label: exam?.replace('-', ' ') || '' },
+                {
+                  label: exam?.replace('-', ' ') || '',
+                  href: `/exam/${exam}`,
+                },
+                { label: `Class ${classSlug}` },
               ]}
             />
-            <h1 className="text-3xl font-bold tracking-tight capitalize">
-              {exam?.replace("-", " ")}
+
+            <h1 className="text-3xl font-bold tracking-tight">
+              Class {classSlug}
             </h1>
-            <p className="text-muted-foreground mt-2">
-              Select a class to browse subjects.
+
+            <p className="mt-2 text-muted-foreground">
+              Select a subject to view papers.
             </p>
           </div>
 
-          <a>
-            <Link to="/">Back</Link>
-          </a>
+          <Link to={`/exam/${exam}`}>Back</Link>
         </div>
 
         {loading ? (
@@ -72,7 +75,7 @@ export default function ClassPage() {
                     <Skeleton className="h-10 w-10 rounded-md" />
                     <div className="space-y-2 flex-1">
                       <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-3 w-20" />
+                      <Skeleton className="h-3 w-16" />
                     </div>
                   </div>
                 </CardContent>
@@ -81,10 +84,10 @@ export default function ClassPage() {
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {classes.map((cls) => (
+            {subjects.map((subject) => (
               <Link
-                key={cls.id}
-                to={`/exam/${exam}/${cls.slug}`}
+                key={subject.id}
+                to={`/exam/${exam}/${classSlug}/${subject.code}`}
                 className="group"
               >
                 <Card className="transition-all hover:border-primary hover:shadow-md">
@@ -95,9 +98,9 @@ export default function ClassPage() {
                       </div>
 
                       <div>
-                        <h2 className="font-semibold">{cls.slug}</h2>
+                        <h2 className="font-semibold">{subject.code}</h2>
                         <p className="text-sm text-muted-foreground">
-                          Open class
+                          {subject.name}
                         </p>
                       </div>
                     </div>

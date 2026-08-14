@@ -1,38 +1,26 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '../../../../src/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/src/lib/prisma'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const exam = req.nextUrl.searchParams.get('exam')
+  const classSlug = req.nextUrl.searchParams.get('class')
+
   const subjects = await prisma.subject.findMany({
-    include: {
+    where: {
       classLevel: {
-        include: {
-          examType: true,
-        },
+        slug: classSlug ?? undefined,
+        examType: exam
+          ? {
+              slug: exam,
+            }
+          : undefined,
       },
     },
-    orderBy: { code: 'asc' },
+    orderBy: {
+      code: 'asc',
+    },
+    distinct: ['code'],
   })
 
   return NextResponse.json(subjects)
-}
-
-export async function POST(req: Request) {
-  try {
-    const body = await req.json()
-
-    const subject = await prisma.subject.create({
-      data: {
-        code: body.code,
-        name: body.name,
-        classLevelId: body.classLevelId,
-      },
-    })
-
-    return NextResponse.json(subject, { status: 201 })
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to create subject' },
-      { status: 500 }
-    )
-  }
 }
