@@ -8,6 +8,8 @@ import Login from "./pages/admin/Login";
 import SubjectPage from "./pages/student/SubjectPage";
 import ClassPage from "./pages/student/ClassPage";
 import PaperPage from "./pages/student/PaperPage";
+import SubjectsAdmin from './pages/admin/Subjects'
+import ClassesAdmin from './pages/admin/Classes'
 // import Papers from "./pages/student/Papers";
 import Approved from "./pages/admin/Approved";
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -29,7 +31,7 @@ export const router = createBrowserRouter([
       // { path: "papers", element: <Papers /> },
       { path: "about", element: <About /> },
       // Catches broken student links inside StudentLayout
-      { path: "*", element: <NotFound /> } 
+      { path: "*", element: <NotFound /> }
     ],
   },
   { path: "/admin/login", element: <Login /> },
@@ -42,14 +44,16 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <AdminDashboard /> },
           { path: "papers", element: <AdminPapers /> },
+          { path: 'subjects', element: <SubjectsAdmin /> },
+          { path: 'classes', element: <ClassesAdmin /> },
           { path: "pending", element: <Pending /> },
           { path: "approved", element: <Approved /> },
           // Catches broken admin links inside AdminLayout
-          { path: "*", element: <NotFound /> } 
+          { path: "*", element: <NotFound /> }
         ],
       },
     ],
   },
   // Global fallback if someone types a completely wrong top-level path
-  { path: "*", element: <NotFound /> }, 
+  { path: "*", element: <NotFound /> },
 ]);

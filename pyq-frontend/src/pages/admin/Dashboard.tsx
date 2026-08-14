@@ -1,71 +1,69 @@
-import { useEffect, useMemo, useState } from "react"
-import { Link } from "react-router-dom"
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   FileClock,
   CheckCircle2,
+  Files,
   Download,
-  Users,
   ArrowRight,
   Upload,
-} from "lucide-react"
+} from 'lucide-react'
 
-import { API_URL } from "../../lib/api"
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
+import { Badge } from '../../components/ui/badge'
+// import { Button } from '../../components/ui/button'
+import Breadcrumbs from '../../components/Breadcrumbs'
 
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
-import { Badge } from "../../components/ui/badge"
-
-interface Paper {
+type Paper = {
   id: string
-  stage: string
-  level: string
-  subject: string
-  examType: string
-  paperYear: number
-  uploaderName: string
-  status: "pending" | "approved"
-  downloads?: number
+  title: string
+  examYear: number
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'
   createdAt: string
+  subject?: {
+    code: string
+    name: string
+    classLevel?: {
+      name: string
+      examType?: {
+        name: string
+      }
+    }
+  }
 }
 
-function formatLabel(value: string) {
-  return value
-    .replace(/-/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/\b\w/g, (c) => c.toUpperCase())
-}
+const API = ''
 
-export default function AdminDashboard() {
+export default function Dashboard() {
   const [papers, setPapers] = useState<Paper[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchData = async () => {
+    async function load() {
       try {
-        const res = await fetch(`${API_URL}/api/admin/papers`)
+        const res = await fetch(`${API}/api/admin/papers`)
         if (!res.ok) throw new Error()
 
         const data = await res.json()
         setPapers(data)
-      } catch {
-        // silent fail for dashboard
+      } catch (err) {
+        console.error(err)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchData()
+    load()
   }, [])
 
   const stats = useMemo(() => {
-    const pending = papers.filter((p) => p.status === "pending")
-    const approved = papers.filter((p) => p.status === "approved")
+    const pending = papers.filter((p) => p.status === 'PENDING')
+    const approved = papers.filter((p) => p.status === 'APPROVED')
 
     return {
       total: papers.length,
       pending: pending.length,
       approved: approved.length,
-      downloads: papers.reduce((sum, p) => sum + (p.downloads ?? 0), 0),
     }
   }, [papers])
 
@@ -83,67 +81,72 @@ export default function AdminDashboard() {
 
   const statCards = [
     {
-      title: "Pending review",
+      title: 'Pending review',
       value: stats.pending,
       icon: FileClock,
-      color: "text-amber-600",
-      bg: "bg-amber-100",
-      href: "/admin/pending",
+      color: 'text-amber-600',
+      bg: 'bg-amber-100',
+      href: '/admin/pending',
     },
     {
-      title: "Approved",
+      title: 'Approved',
       value: stats.approved,
       icon: CheckCircle2,
-      color: "text-green-600",
-      bg: "bg-green-100",
-      href: "/admin/approved",
+      color: 'text-green-600',
+      bg: 'bg-green-100',
+      href: '/admin/approved',
     },
     {
-      title: "Total papers",
+      title: 'Total papers',
       value: stats.total,
-      icon: Users,
-      color: "text-blue-600",
-      bg: "bg-blue-100",
-      href: "/admin/papers",
+      icon: Files,
+      color: 'text-blue-600',
+      bg: 'bg-blue-100',
+      href: '/admin/papers',
     },
     {
-      title: "Downloads",
-      value: stats.downloads.toLocaleString(),
+      title: 'Downloads',
+      value: '—',
       icon: Download,
-      color: "text-violet-600",
-      bg: "bg-violet-100",
-      href: "/admin/papers",
+      color: 'text-violet-600',
+      bg: 'bg-violet-100',
+      href: '/admin/papers',
     },
   ]
 
   return (
     <div className="space-y-8">
+      <div>
+        <Breadcrumbs
+          items={[
+            { label: 'Admin', href: '/admin' },
+            { label: 'Dashboard' },
+          ]}
+        />
+      </div>
+
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900">
-            Admin Dashboard
+          <h1 className="text-3xl font-bold tracking-tight">
+            Dashboard
           </h1>
-          <p className="mt-1 text-zinc-500">
+          <p className="mt-2 text-muted-foreground">
             Review submissions and manage the paper library.
           </p>
         </div>
 
         <div className="flex gap-3">
-          <Link
-            to="/admin/pending"
-            className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-900 hover:bg-zinc-50"
-          >
-            Review pending
-          </Link>
+          <a >
+            <Link to="/admin/pending">Review pending</Link>
+          </a>
 
-          <Link
-            to="/submit"
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800"
-          >
-            <Upload className="h-4 w-4" />
-            Upload
-          </Link>
+          <a >
+            <Link to="/admin/upload">
+              <Upload className="mr-2 h-4 w-4" />
+              Upload
+            </Link>
+          </a>
         </div>
       </div>
 
@@ -154,17 +157,21 @@ export default function AdminDashboard() {
 
           return (
             <Link key={stat.title} to={stat.href}>
-              <Card className="rounded-3xl border-zinc-200 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+              <Card className="transition-all hover:-translate-y-0.5 hover:shadow-md">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-sm text-zinc-500">{stat.title}</p>
-                      <p className="mt-2 text-3xl font-bold tracking-tight text-zinc-900">
-                        {loading ? "—" : stat.value}
+                      <p className="text-sm text-muted-foreground">
+                        {stat.title}
+                      </p>
+                      <p className="mt-2 text-3xl font-bold tracking-tight">
+                        {loading ? '—' : stat.value}
                       </p>
                     </div>
 
-                    <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${stat.bg}`}>
+                    <div
+                      className={`flex h-11 w-11 items-center justify-center rounded-2xl ${stat.bg}`}
+                    >
                       <Icon className={`h-5 w-5 ${stat.color}`} />
                     </div>
                   </div>
@@ -178,18 +185,18 @@ export default function AdminDashboard() {
       {/* Main content */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Recent submissions */}
-        <Card className="rounded-3xl border-zinc-200 shadow-sm lg:col-span-2">
+        <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div>
               <CardTitle>Recent submissions</CardTitle>
-              <p className="text-sm text-zinc-500 mt-1">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Latest uploaded papers
               </p>
             </div>
 
             <Link
               to="/admin/papers"
-              className="text-sm font-medium text-zinc-700 hover:text-zinc-900 inline-flex items-center gap-1"
+              className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
             >
               View all
               <ArrowRight className="h-4 w-4" />
@@ -197,17 +204,19 @@ export default function AdminDashboard() {
           </CardHeader>
 
           <CardContent className="space-y-4">
-            {loading && (
-              <div className="space-y-3">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="h-16 rounded-2xl bg-zinc-100 animate-pulse" />
-                ))}
-              </div>
-            )}
+            {loading &&
+              Array.from({ length: 5 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-16 animate-pulse rounded-2xl bg-muted"
+                />
+              ))}
 
             {!loading && recentPapers.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-zinc-200 p-10 text-center">
-                <p className="text-sm text-zinc-500">No submissions yet.</p>
+              <div className="rounded-2xl border border-dashed p-10 text-center">
+                <p className="text-sm text-muted-foreground">
+                  No submissions yet.
+                </p>
               </div>
             )}
 
@@ -215,15 +224,15 @@ export default function AdminDashboard() {
               recentPapers.map((paper) => (
                 <div
                   key={paper.id}
-                  className="flex items-center justify-between rounded-2xl border border-zinc-200 p-4"
+                  className="flex items-center justify-between rounded-2xl border p-4"
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium text-zinc-900 truncate">
-                        {paper.subject}
+                    <div className="mb-1 flex items-center gap-2">
+                      <p className="truncate font-medium">
+                        {paper.title}
                       </p>
 
-                      {paper.status === "approved" ? (
+                      {paper.status === 'APPROVED' ? (
                         <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
                           Approved
                         </Badge>
@@ -232,31 +241,26 @@ export default function AdminDashboard() {
                       )}
                     </div>
 
-                    <p className="text-sm text-zinc-500">
-                      {formatLabel(paper.stage)} • {formatLabel(paper.level)} • {paper.paperYear}
-                    </p>
-
-                    <p className="text-xs text-zinc-400 mt-1">
-                      by {paper.uploaderName}
+                    <p className="text-sm text-muted-foreground">
+                      {paper.subject?.classLevel?.examType?.name} • Class{' '}
+                      {paper.subject?.classLevel?.name} •{' '}
+                      {paper.subject?.code} • {paper.examYear}
                     </p>
                   </div>
 
-                  <Link
-                    to={`/admin/papers/${paper.id}`}
-                    className="ml-4 inline-flex h-9 items-center justify-center rounded-md border border-zinc-200 px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-                  >
-                    Review
-                  </Link>
+                  <a >
+                    <Link to="/admin/pending">Review</Link>
+                  </a>
                 </div>
               ))}
           </CardContent>
         </Card>
 
         {/* Quick actions */}
-        <Card className="rounded-3xl border-zinc-200 shadow-sm">
+        <Card>
           <CardHeader>
             <CardTitle>Quick actions</CardTitle>
-            <p className="text-sm text-zinc-500 mt-1">
+            <p className="mt-1 text-sm text-muted-foreground">
               Common admin tasks
             </p>
           </CardHeader>
@@ -264,49 +268,51 @@ export default function AdminDashboard() {
           <CardContent className="space-y-3">
             <Link
               to="/admin/pending"
-              className="flex items-center justify-between rounded-2xl border border-zinc-200 p-4 hover:bg-zinc-50"
+              className="flex items-center justify-between rounded-2xl border p-4 hover:bg-muted/50"
             >
               <div>
-                <p className="font-medium text-zinc-900">Review pending</p>
-                <p className="text-sm text-zinc-500">
+                <p className="font-medium">Review pending</p>
+                <p className="text-sm text-muted-foreground">
                   {stats.pending} awaiting approval
                 </p>
               </div>
-              <ArrowRight className="h-4 w-4 text-zinc-400" />
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
             </Link>
 
             <Link
               to="/admin/approved"
-              className="flex items-center justify-between rounded-2xl border border-zinc-200 p-4 hover:bg-zinc-50"
+              className="flex items-center justify-between rounded-2xl border p-4 hover:bg-muted/50"
             >
               <div>
-                <p className="font-medium text-zinc-900">Approved papers</p>
-                <p className="text-sm text-zinc-500">
+                <p className="font-medium">Approved papers</p>
+                <p className="text-sm text-muted-foreground">
                   Browse approved library
                 </p>
               </div>
-              <ArrowRight className="h-4 w-4 text-zinc-400" />
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
             </Link>
 
             <Link
-              to="/admin/papers"
-              className="flex items-center justify-between rounded-2xl border border-zinc-200 p-4 hover:bg-zinc-50"
+              to="/admin/upload"
+              className="flex items-center justify-between rounded-2xl border p-4 hover:bg-muted/50"
             >
               <div>
-                <p className="font-medium text-zinc-900">All papers</p>
-                <p className="text-sm text-zinc-500">
-                  Search and manage papers
+                <p className="font-medium">Upload paper</p>
+                <p className="text-sm text-muted-foreground">
+                  Add a new question paper
                 </p>
               </div>
-              <ArrowRight className="h-4 w-4 text-zinc-400" />
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
             </Link>
 
-            <div className="rounded-2xl bg-zinc-50 p-4">
-              <p className="font-medium text-zinc-900">Library health</p>
-              <p className="text-sm text-zinc-500 mt-1">
+            <div className="rounded-2xl bg-muted p-4">
+              <p className="font-medium">Library health</p>
+              <p className="mt-1 text-sm text-muted-foreground">
                 {stats.total === 0
-                  ? "No papers available yet."
-                  : `${Math.round((stats.approved / Math.max(stats.total, 1)) * 100)}% of submissions are approved.`}
+                  ? 'No papers available yet.'
+                  : `${Math.round(
+                      (stats.approved / Math.max(stats.total, 1)) * 100
+                    )}% of submissions are approved.`}
               </p>
             </div>
           </CardContent>
