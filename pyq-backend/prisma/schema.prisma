@@ -1,3 +1,5 @@
+// prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,64 +9,115 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model ExamType {
-  id        String       @id @default(cuid())
-  slug      String       @unique
-  name      String
-  classes   ClassLevel[]
-  createdAt DateTime     @default(now())
+// =========================
+// ENUMS
+// =========================
+
+enum Stage {
+  SECONDARY
+  SENIOR_SECONDARY
+  DEGREE
+  PG
 }
 
-model ClassLevel {
-  id         String      @id @default(cuid())
-  slug       String
-  label      String
-
-  examType   ExamType    @relation(fields: [examTypeId], references: [id], onDelete: Cascade)
-  examTypeId String
-
-  subjects   Subject[]
-
-  @@unique([examTypeId, slug])
-  @@index([examTypeId])
-}
-
-model Subject {
-  id           String      @id @default(cuid())
-  code         String
-  name         String
-
-  classLevel   ClassLevel  @relation(fields: [classLevelId], references: [id], onDelete: Cascade)
-  classLevelId String
-
-  papers       Paper[]
-
-  @@unique([classLevelId, code])
-  @@index([classLevelId])
-}
-
-model Paper {
-  id         String      @id @default(cuid())
-  title      String
-  examYear   Int
-  pdfUrl     String
-  fileSize   Int?
-  status     PaperStatus @default(PENDING)
-
-  subject     Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  subjectId   String
-
-  uploadedBy  String?
-  approvedAt  DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([subjectId])
-  @@index([status])
+enum PaperType {
+  ANNUAL
+  HALF_YEARLY
+  MODEL
+  INTERNAL
+  OTHER
 }
 
 enum PaperStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+// =========================
+// SUBJECTS
+// =========================
+
+model Subject {
+  id        String   @id @default(cuid())
+
+  // Display name
+  name      String
+
+  // Optional short code (ADB, ENG, FIQH)
+  code      String?
+
+  // Fixed structure
+  stage     Stage
+  year      Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  papers    Paper[]
+
+  // Prevent duplicate subjects in same stage/year
+  @@unique([stage, year, name], name: "stage_year_name")
+
+  // Faster filtering
+  @@index([stage, year])
+}
+
+// =========================
+// PAPERS
+// =========================
+
+model Paper {
+  id            String      @id @default(cuid())
+
+  title         String
+  examYear      Int
+
+  paperType     PaperType
+
+  pdfUrl        String
+  fileSize      Int?
+
+  status        PaperStatus @default(PENDING)
+
+  // Relation
+  subjectId     String
+  subject       Subject     @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  // Optional uploader info
+  uploaderName  String?
+  uploaderEmail String?
+
+  approvedAt    DateTime?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Faster filtering
+  @@index([status])
+  @@index([examYear])
+  @@index([subjectId])
+}
+
+// =========================
+// SUBJECT SUGGESTIONS
+// =========================
+
+model SubjectSuggestion {
+  id          String   @id @default(cuid())
+
+  name        String
+
+  stage       Stage
+  year        Int
+
+  suggestedBy String?
+
+  // pending / approved / rejected
+  status      String   @default("pending")
+
+  createdAt   DateTime @default(now())
+
+  @@index([stage, year])
+  @@index([status])
 }

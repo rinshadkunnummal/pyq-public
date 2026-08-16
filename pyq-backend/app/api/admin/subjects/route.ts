@@ -2,25 +2,33 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/src/lib/prisma'
 
 export async function GET(req: NextRequest) {
-  const exam = req.nextUrl.searchParams.get('exam')
-  const classSlug = req.nextUrl.searchParams.get('class')
+  const stage = req.nextUrl.searchParams.get('stage')
+  const year = req.nextUrl.searchParams.get('year')
 
   const subjects = await prisma.subject.findMany({
     where: {
-      classLevel: {
-        slug: classSlug ?? undefined,
-        examType: exam
-          ? {
-              slug: exam,
-            }
-          : undefined,
-      },
+      stage: stage ? (stage as any) : undefined,
+      year: year ? Number(year) : undefined,
     },
     orderBy: {
-      code: 'asc',
+      name: 'asc',
     },
-    distinct: ['code'],
   })
 
   return NextResponse.json(subjects)
+}
+
+export async function POST(req: Request) {
+  const body = await req.json()
+
+  const subject = await prisma.subject.create({
+    data: {
+      name: body.name,
+      code: body.code,
+      stage: body.stage,
+      year: body.year,
+    },
+  })
+
+  return NextResponse.json(subject)
 }
