@@ -1,12 +1,13 @@
 import { useState } from "react"
-import { Link, NavLink } from "react-router-dom"
+import { Link } from "react-router-dom"
+// import { NavLink } from "react-router-dom"
 import { BookOpen, Upload, Menu, X } from "lucide-react"
 
-const navigation = [
-  { name: "Home", href: "/" },
-  { name: "Papers", href: "/papers" },
-  { name: "About", href: "/about" },
-]
+// const navigation = [
+//   { name: "Home", href: "/" },
+//   { name: "Papers", href: "/papers" },
+//   { name: "About", href: "/about" },
+// ]
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
@@ -21,12 +22,11 @@ export default function Navbar() {
           </div>
 
           <div className="leading-tight">
-            <p className="font-semibold tracking-tight text-zinc-900">PyQ</p>
-            <p className="text-xs text-zinc-500">Question papers</p>
+            <p className="font-semibold tracking-tight text-zinc-900">DH PYQ Archive</p>
           </div>
         </Link>
 
-        {/* Desktop nav */}
+        {/* Desktop nav
         <nav className="hidden items-center gap-1 md:flex">
           {navigation.map((item) => (
             <NavLink
@@ -43,7 +43,7 @@ export default function Navbar() {
               {item.name}
             </NavLink>
           ))}
-        </nav>
+        </nav> */}
 
         {/* Desktop actions */}
         <div className="hidden items-center gap-3 md:flex">
@@ -52,7 +52,7 @@ export default function Navbar() {
             className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
           >
             <Upload className="h-4 w-4" />
-            Upload
+            Submit a Paper
           </Link>
         </div>
 
@@ -70,7 +70,7 @@ export default function Navbar() {
       {open && (
         <div className="border-t border-zinc-200 bg-white md:hidden">
           <nav className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-4">
-            {navigation.map((item) => (
+            {/* {navigation.map((item) => (
               <NavLink
                 key={item.name}
                 to={item.href}
@@ -85,7 +85,7 @@ export default function Navbar() {
               >
                 {item.name}
               </NavLink>
-            ))}
+            ))} */}
 
             <div className="pt-3">
               <Link
@@ -94,7 +94,7 @@ export default function Navbar() {
                 className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
               >
                 <Upload className="h-4 w-4" />
-                Upload a paper
+                Submit a paper
               </Link>
             </div>
           </nav>

@@ -23,8 +23,8 @@ export default function AdminLayout() {
       icon: LayoutDashboard,
     },
     {
-      label: "Papers",
-      href: "/admin/papers",
+      label: "Subjects",
+      href: "/admin/subjects",
       icon: Files,
     },
     {
@@ -35,6 +35,11 @@ export default function AdminLayout() {
     {
       label: "Approved",
       href: "/admin/approved",
+      icon: CheckCircle2,
+    },
+    {
+      label: "Classes",
+      href: "/admin/classes",
       icon: CheckCircle2,
     },
   ]
