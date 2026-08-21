@@ -137,7 +137,7 @@ export default function AdminApproved() {
                 </div>
 
                 <Popover>
-                    <PopoverTrigger asChild>
+                    <PopoverTrigger>
                         <Button variant="outline" className="gap-2">
                             <Filter className="h-4 w-4" />
                             Filter

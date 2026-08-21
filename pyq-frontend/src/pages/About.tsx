@@ -1,7 +1,7 @@
 import { BookOpen, CheckCircle2, Users, ShieldCheck, Sparkles } from "lucide-react"
 
-import { Badge } from "../../components/ui/badge"
-import { Card, CardContent } from "../../components/ui/card"
+import { Badge } from "../components/ui/badge"
+import { Card, CardContent } from "../components/ui/card"
 
 const values = [
   {
