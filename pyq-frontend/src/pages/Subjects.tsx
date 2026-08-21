@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from "react"
-import { ArrowLeft, ArrowRight, Folder, RefreshCw } from "lucide-react"
+import {
+  ArrowLeft,
+  ArrowRight,
+  Folder,
+  RefreshCw,
+} from "lucide-react"
 import { Link, useParams } from "react-router-dom"
 
 import { Button } from "../components/ui/button"
@@ -12,14 +17,16 @@ import { Skeleton } from "../components/ui/skeleton"
 type Subject = {
   id: string
   name: string
-  slug: string
+  code: string
   stage: string
   year: number
+  createdAt?: string
+  updatedAt?: string
 }
 
 const API =
   import.meta.env.VITE_API_URL ||
-  "https://special-space-umbrella-v67vvq5prw5hpqjg-3000.app.github.dev"
+  "https://ubiquitous-goggles-v6gpvgww4gr7cwqq5-3000.app.github.dev"
 
 const STAGE_LABELS: Record<string, string> = {
   secondary: "Secondary",
@@ -29,22 +36,29 @@ const STAGE_LABELS: Record<string, string> = {
 }
 
 const YEAR_LABELS: Record<string, string> = {
-  "1": "First Year",
-  "2": "Second Year",
-  "3": "Third Year",
-  "4": "Fourth Year",
-  "5": "Fifth Year",
+  "first-year": "First Year",
+  "second-year": "Second Year",
+  "third-year": "Third Year",
+  "fourth-year": "Fourth Year",
+  "fifth-year": "Fifth Year",
 }
 
 function getStageLabel(stage: string) {
   return (
-    STAGE_LABELS[stage.toLowerCase()] ||
-    stage.replace(/-/g, " ")
+    STAGE_LABELS[stage.toLowerCase()] ??
+    stage
+      .replace(/-/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase())
   )
 }
 
 function getYearLabel(year: string) {
-  return YEAR_LABELS[year] || `Year ${year}`
+  return (
+    YEAR_LABELS[year.toLowerCase()] ??
+    year
+      .replace(/-/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase())
+  )
 }
 
 export default function Subjects() {
@@ -61,50 +75,69 @@ export default function Subjects() {
   const yearLabel = getYearLabel(year)
 
   const loadSubjects = useCallback(async () => {
-    if (!stage || !year) return
+    if (!stage || !year) {
+      setSubjects([])
+      setError("Invalid stage or year.")
+      setLoading(false)
+      return
+    }
 
     try {
       setLoading(true)
       setError("")
 
-      const url =
-        `${API}/api/admin/subjects` +
-        `?stage=${encodeURIComponent(stage)}` +
-        `&year=${encodeURIComponent(year)}`
+      /*
+       * IMPORTANT:
+       * Backend expects:
+       *
+       * stage=degree
+       * year=first-year
+       *
+       * Not year=1.
+       */
 
-      const res = await fetch(url)
+      const params = new URLSearchParams({
+        stage,
+        year,
+      })
 
-      if (!res.ok) {
-        let message = "Unable to load subjects."
+      const url = `${API}/api/admin/subjects?${params.toString()}`
+
+      console.log("Loading subjects:", url)
+
+      const response = await fetch(url)
+
+      if (!response.ok) {
+        let message = `Unable to load subjects (${response.status}).`
 
         try {
-          const data = await res.json()
+          const data = await response.json()
 
           if (data?.error) {
             message = data.error
           }
         } catch {
-          // Ignore invalid JSON response
+          // Ignore invalid JSON
         }
 
         throw new Error(message)
       }
 
-      const data = await res.json()
+      const data: unknown = await response.json()
 
       if (!Array.isArray(data)) {
         throw new Error("Invalid subjects response.")
       }
 
-      setSubjects(data)
-    } catch (error) {
-      console.error("Failed to load subjects:", error)
+      setSubjects(data as Subject[])
+    } catch (err) {
+      console.error("Failed to load subjects:", err)
 
       setSubjects([])
 
       setError(
-        error instanceof Error
-          ? error.message
+        err instanceof Error
+          ? err.message
           : "Unable to load subjects."
       )
     } finally {
@@ -117,11 +150,11 @@ export default function Subjects() {
   }, [loadSubjects])
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-6xl px-4 py-10">
+    <main className="min-h-screen bg-background">
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
 
         {/* Breadcrumb */}
-        <div className="mb-8 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+        <nav className="mb-8 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <Link
             to="/"
             className="transition-colors hover:text-foreground"
@@ -143,13 +176,12 @@ export default function Subjects() {
           <span className="font-medium text-foreground">
             {yearLabel}
           </span>
-        </div>
+        </nav>
 
         {/* Header */}
-        <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <header className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
-
-            <div className="rounded-xl border bg-muted p-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border bg-muted">
               <Folder className="h-6 w-6 text-muted-foreground" />
             </div>
 
@@ -173,50 +205,50 @@ export default function Subjects() {
             variant="outline"
             onClick={loadSubjects}
             disabled={loading}
+            className="shrink-0"
           >
             <RefreshCw
-              className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""
-                }`}
+              className={`mr-2 h-4 w-4 ${
+                loading ? "animate-spin" : ""
+              }`}
             />
             Refresh
           </Button>
-        </div>
+        </header>
 
-        {/* Subjects section */}
+        {/* Subjects */}
         <section>
-          <div className="mb-5 flex items-end justify-between">
-            <div>
-              <h2 className="text-lg font-semibold">
-                Subjects
-              </h2>
+          <div className="mb-5">
+            <h2 className="text-lg font-semibold">
+              Subjects
+            </h2>
 
-              {!loading && !error && (
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {subjects.length}{" "}
-                  {subjects.length === 1
-                    ? "subject"
-                    : "subjects"}{" "}
-                  available
-                </p>
-              )}
-            </div>
+            {!loading && !error && (
+              <p className="mt-1 text-sm text-muted-foreground">
+                {subjects.length}{" "}
+                {subjects.length === 1
+                  ? "subject"
+                  : "subjects"}{" "}
+                available
+              </p>
+            )}
           </div>
 
           {/* Loading */}
           {loading && (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, index) => (
+              {Array.from({ length: 3 }).map((_, index) => (
                 <Card key={index}>
-                  <CardContent className="p-6">
+                  <CardContent className="p-5">
                     <div className="flex items-center gap-4">
                       <Skeleton className="h-12 w-12 rounded-xl" />
 
                       <div className="flex-1 space-y-2">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-3 w-24" />
+                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-3 w-20" />
                       </div>
 
-                      <Skeleton className="h-5 w-5 rounded" />
+                      <Skeleton className="h-5 w-5" />
                     </div>
                   </CardContent>
                 </Card>
@@ -228,7 +260,7 @@ export default function Subjects() {
           {!loading && error && (
             <Card>
               <CardContent className="flex min-h-[260px] flex-col items-center justify-center p-8 text-center">
-                <div className="mb-4 rounded-xl border bg-muted p-4">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl border bg-muted">
                   <Folder className="h-6 w-6 text-muted-foreground" />
                 </div>
 
@@ -256,7 +288,7 @@ export default function Subjects() {
           {!loading && !error && subjects.length === 0 && (
             <Card>
               <CardContent className="flex min-h-[260px] flex-col items-center justify-center p-8 text-center">
-                <div className="mb-4 rounded-xl border bg-muted p-4">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl border bg-muted">
                   <Folder className="h-6 w-6 text-muted-foreground" />
                 </div>
 
@@ -272,7 +304,7 @@ export default function Subjects() {
             </Card>
           )}
 
-          {/* Subjects */}
+          {/* Subject cards */}
           {!loading && !error && subjects.length > 0 && (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {subjects.map((subject) => (
@@ -282,9 +314,9 @@ export default function Subjects() {
                   className="group"
                 >
                   <Card className="h-full transition-all duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
-                    <CardContent className="flex items-center justify-between p-6">
+                    <CardContent className="flex items-center justify-between p-5">
                       <div className="flex min-w-0 items-center gap-4">
-                        <div className="shrink-0 rounded-xl border bg-muted p-3 transition-colors group-hover:bg-primary/10">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border bg-muted transition-colors group-hover:bg-primary/10">
                           <Folder className="h-6 w-6 text-muted-foreground transition-colors group-hover:text-primary" />
                         </div>
 
@@ -294,7 +326,7 @@ export default function Subjects() {
                           </h3>
 
                           <p className="mt-1 text-sm text-muted-foreground">
-                            View question papers
+                            {subject.code}
                           </p>
                         </div>
                       </div>
@@ -317,8 +349,7 @@ export default function Subjects() {
             </Button>
           </Link>
         </div>
-
       </div>
-    </div>
+    </main>
   )
 }

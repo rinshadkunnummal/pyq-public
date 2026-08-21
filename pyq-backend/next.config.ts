@@ -1,27 +1,28 @@
-import type { NextConfig } from "next"
+import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
 
-const nextConfig: NextConfig = {
-  async headers() {
-    return [
-      {
-        source: "/api/:path*",
-        headers: [
-          {
-            key: "Access-Control-Allow-Origin",
-            value: "https://pyq-frontend-iota.vercel.app",
-          },
-          {
-            key: "Access-Control-Allow-Methods",
-            value: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
-          },
-          {
-            key: "Access-Control-Allow-Headers",
-            value: "Content-Type, Authorization",
-          },
-        ],
-      },
-    ]
-  },
+const allowedOrigins = [
+  "https://pyq-frontend-iota.vercel.app",
+  "https://ubiquitous-goggles-v6gpvgww4gr7cwqq5-5173.app.github.dev",
+]
+
+export function proxy(request: NextRequest) {
+  const origin = request.headers.get("origin")
+
+  const response = NextResponse.next()
+
+  if (origin && allowedOrigins.includes(origin)) {
+    response.headers.set("Access-Control-Allow-Origin", origin)
+    response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+    response.headers.set(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization"
+    )
+  }
+
+  return response
 }
 
-export default nextConfig
+export const config = {
+  matcher: "/api/:path*",
+}

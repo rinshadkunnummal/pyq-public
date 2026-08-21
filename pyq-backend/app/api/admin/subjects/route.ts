@@ -23,6 +23,74 @@ const yearMap: Record<string, number> = {
   "fifth-year": 5,
 }
 
+export async function POST(req: NextRequest) {
+
+  try {
+
+    const body = await req.json()
+
+    const { name, code, stage, year } = body
+
+    if (!name || !code || !stage || year === undefined) {
+
+      return NextResponse.json(
+
+        { error: "Missing required fields: name, code, stage, year" },
+
+        { status: 400 }
+
+      )
+
+    }
+
+    const stageValue = stageMap[String(stage).toLowerCase()]
+
+    if (!stageValue) {
+
+      return NextResponse.json(
+
+        { error: "Invalid stage" },
+
+        { status: 400 }
+
+      )
+
+    }
+
+    const subject = await prisma.subject.create({
+
+      data: {
+
+        name,
+
+        code,
+
+        stage: stageValue,
+
+        year: Number(year),
+
+      },
+
+    })
+
+    return NextResponse.json(subject, { status: 201 })
+
+  } catch (error) {
+
+    console.error("Failed to create subject:", error)
+
+    return NextResponse.json(
+
+      { error: "Failed to create subject" },
+
+      { status: 500 }
+
+    )
+
+  }
+
+}
+
 export async function GET(req: NextRequest) {
   try {
     const stageSlug = req.nextUrl.searchParams.get("stage")

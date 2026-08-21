@@ -15,5 +15,18 @@ export async function PATCH(
     },
   })
 
-  return NextResponse.json(paper)
+  const res = NextResponse.json(paper)
+  res.headers.set('Access-Control-Allow-Origin', '*')
+  return res
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  })
 }

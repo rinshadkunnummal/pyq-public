@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom"
 import {
   CheckCircle2,
   FileText,
+  Lightbulb,
   Loader2,
   Upload,
 } from "lucide-react"
@@ -49,27 +50,22 @@ const STAGES = [
   },
 ]
 
-const YEARS = [
-  {
-    value: "1",
-    label: "First Year",
-  },
-  {
-    value: "2",
-    label: "Second Year",
-  },
-  {
-    value: "3",
-    label: "Third Year",
-  },
-  {
-    value: "4",
-    label: "Fourth Year",
-  },
-  {
-    value: "5",
-    label: "Fifth Year",
-  },
+/*
+ * Number of academic years per stage.
+ */
+const STAGE_YEAR_COUNT: Record<string, number> = {
+  secondary: 5,
+  "senior-secondary": 2,
+  degree: 3,
+  pg: 2,
+}
+
+const YEAR_LABELS = [
+  "First Year",
+  "Second Year",
+  "Third Year",
+  "Fourth Year",
+  "Fifth Year",
 ]
 
 const PAPER_TYPES = [
@@ -111,6 +107,38 @@ export default function Submit() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+
+  /*
+   * Subject suggestion (when a subject isn't in the list yet)
+   */
+  const [showSuggestForm, setShowSuggestForm] = useState(false)
+  const [suggestName, setSuggestName] = useState("")
+  const [suggesting, setSuggesting] = useState(false)
+  const [suggestError, setSuggestError] = useState<string | null>(
+    null
+  )
+  const [suggestSuccess, setSuggestSuccess] = useState(false)
+
+  /*
+   * Years available for the currently selected stage.
+   */
+  const yearOptions = stage
+    ? Array.from(
+        { length: STAGE_YEAR_COUNT[stage] ?? 0 },
+        (_, i) => ({
+          value: String(i + 1),
+          label: YEAR_LABELS[i],
+        })
+      )
+    : []
+
+  /*
+   * Reset year (and downstream subject) whenever stage changes,
+   * since each stage has a different set of valid years.
+   */
+  useEffect(() => {
+    setYear("")
+  }, [stage])
 
   /*
    * Load subjects whenever stage/year changes.
@@ -163,6 +191,74 @@ export default function Submit() {
 
     loadSubjects()
   }, [stage, year])
+
+  /*
+   * Close the suggestion form when stage/year change, since a
+   * suggestion is tied to whichever stage/year was open.
+   */
+  useEffect(() => {
+    setShowSuggestForm(false)
+    setSuggestName("")
+    setSuggestError(null)
+    setSuggestSuccess(false)
+  }, [stage, year])
+
+  const submitSubjectSuggestion = async () => {
+    setSuggestError(null)
+
+    if (!suggestName.trim()) {
+      setSuggestError("Please enter a subject name.")
+      return
+    }
+
+    if (!stage || !year) {
+      setSuggestError("Please select a stage and year first.")
+      return
+    }
+
+    setSuggesting(true)
+
+    try {
+      const res = await fetch(
+        `${API}/api/subjects/suggest`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: suggestName.trim(),
+            stage,
+            year: Number(year),
+            suggestedBy: uploaderName.trim() || null,
+          }),
+        }
+      )
+
+      const data = await res.json().catch(() => null)
+
+      if (!res.ok) {
+        throw new Error(
+          data?.error ||
+            data?.message ||
+            "Failed to submit suggestion."
+        )
+      }
+
+      setSuggestSuccess(true)
+      setSuggestName("")
+    } catch (err) {
+      console.error("Subject suggestion failed:", err)
+
+      setSuggestError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong while submitting your suggestion."
+      )
+    } finally {
+      setSuggesting(false)
+    }
+  }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -368,10 +464,12 @@ export default function Submit() {
                 required
               >
                 <option value="">
-                  Select year
+                  {stage
+                    ? "Select year"
+                    : "Select a stage first"}
                 </option>
 
-                {YEARS.map((item) => (
+                {yearOptions.map((item) => (
                   <option
                     key={item.value}
                     value={item.value}
@@ -436,6 +534,87 @@ export default function Submit() {
                     and year.
                   </p>
                 )}
+
+              {stage && year && !suggestSuccess && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowSuggestForm((prev) => !prev)
+                  }
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Lightbulb className="h-3.5 w-3.5" />
+                  {showSuggestForm
+                    ? "Cancel suggestion"
+                    : "Can't find your subject? Suggest one"}
+                </button>
+              )}
+
+              {showSuggestForm && !suggestSuccess && (
+                <div className="rounded-lg border border-dashed p-4 space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="suggestName">
+                      Subject name
+                    </Label>
+
+                    <Input
+                      id="suggestName"
+                      value={suggestName}
+                      onChange={(e) =>
+                        setSuggestName(e.target.value)
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault()
+                          submitSubjectSuggestion()
+                        }
+                      }}
+                      placeholder="e.g. Comparative Religion"
+                    />
+
+                    <p className="text-xs text-muted-foreground">
+                      This will be suggested for{" "}
+                      {
+                        STAGES.find((s) => s.value === stage)
+                          ?.label
+                      }
+                      , {YEAR_LABELS[Number(year) - 1]}. An
+                      admin will review it before it's added.
+                    </p>
+                  </div>
+
+                  {suggestError && (
+                    <p className="text-sm text-destructive">
+                      {suggestError}
+                    </p>
+                  )}
+
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    disabled={suggesting}
+                    onClick={submitSubjectSuggestion}
+                  >
+                    {suggesting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      "Submit suggestion"
+                    )}
+                  </Button>
+                </div>
+              )}
+
+              {suggestSuccess && (
+                <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  Thanks! Your subject suggestion has been sent
+                  for review.
+                </div>
+              )}
             </div>
 
             {/* Title */}

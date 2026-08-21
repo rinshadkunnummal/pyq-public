@@ -9,14 +9,19 @@ import { CheckCircle2, Eye, Loader2 } from "lucide-react"
 
 interface Paper {
   id: string
-  stage: string
-  level: string
-  subject: string
-  examType: string
-  paperYear: number
+  title: string
+  examYear: number
+  paperType: string
   pdfUrl: string
   uploaderName: string
-  status: "pending" | "approved"
+  status: string
+  subject: {
+    id: string
+    name: string
+    code: string
+    stage: string
+    year: number
+  }
 }
 
 export default function AdminPending() {
@@ -50,15 +55,14 @@ export default function AdminPending() {
     try {
       setApprovingId(id)
 
-      const res = await fetch(`${API_URL}/api/admin/papers/${id}/approve`, {
-        method: "POST",
+      const res = await fetch(`${API_URL}/api/admin/papers/approve/${id}`, {
+        method: "PATCH",
       })
 
       if (!res.ok) {
         throw new Error("Failed to approve paper")
       }
 
-      // Remove approved paper from pending list
       setPapers((prev) => prev.filter((paper) => paper.id !== id))
     } catch (err) {
       alert(err instanceof Error ? err.message : "Something went wrong")
@@ -126,9 +130,9 @@ export default function AdminPending() {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
-                    <CardTitle className="text-lg">{paper.subject}</CardTitle>
+                    <CardTitle className="text-lg">{paper.subject.name}</CardTitle>
                     <p className="text-sm text-muted-foreground capitalize">
-                      {paper.examType}
+                      {paper.paperType.replace(/_/g, " ")}
                     </p>
                   </div>
 
@@ -140,24 +144,19 @@ export default function AdminPending() {
                 <div className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
                   <div>
                     <p className="text-muted-foreground">Stage</p>
-                    <p className="font-medium capitalize">{paper.stage}</p>
-                  </div>
-
-                  <div>
-                    <p className="text-muted-foreground">Level</p>
                     <p className="font-medium capitalize">
-                      {paper.level.replace(/-/g, " ")}
+                      {paper.subject.stage.replace(/_/g, " ").toLowerCase()}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-muted-foreground">Year</p>
-                    <p className="font-medium">{paper.paperYear}</p>
+                    <p className="text-muted-foreground">Subject year</p>
+                    <p className="font-medium">{paper.subject.year}</p>
                   </div>
 
                   <div>
-                    <p className="text-muted-foreground">Uploaded by</p>
-                    <p className="font-medium">{paper.uploaderName}</p>
+                    <p className="text-muted-foreground">Exam year</p>
+                    <p className="font-medium">{paper.examYear}</p>
                   </div>
                 </div>
 
