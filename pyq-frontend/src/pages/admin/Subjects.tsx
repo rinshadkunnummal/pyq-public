@@ -12,38 +12,90 @@ import {
 
 const API = ""
 
+type ClassItem = {
+  id: string
+  name: string
+  examType?: {
+    name: string
+  }
+}
+
 export default function SubjectsAdmin() {
-  const [classes, setClasses] = useState<any[]>([])
+  const [classes, setClasses] = useState<ClassItem[]>([])
   const [name, setName] = useState("")
   const [code, setCode] = useState("")
   const [classId, setClassId] = useState("")
 
+  const [loading, setLoading] = useState(false)
+  const [creating, setCreating] = useState(false)
+
   useEffect(() => {
-    fetch(`${API}/api/admin/classes`)
-      .then((r) => r.json())
-      .then(setClasses)
+    async function loadClasses() {
+      try {
+        setLoading(true)
+
+        const response = await fetch(`${API}/api/admin/classes`)
+
+        if (!response.ok) {
+          throw new Error("Failed to load classes")
+        }
+
+        const data = await response.json()
+        setClasses(data)
+      } catch (error) {
+        console.error("Failed to load classes:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadClasses()
   }, [])
 
   async function createSubject() {
-    await fetch(`${API}/api/admin/subjects`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name,
-        code,
-        classId,
-      }),
-    })
+    if (!name.trim() || !code.trim() || !classId) {
+      return
+    }
 
-    setName("")
-    setCode("")
+    try {
+      setCreating(true)
+
+      const response = await fetch(`${API}/api/admin/subjects`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          code: code.trim(),
+          classId,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to create subject")
+      }
+
+      setName("")
+      setCode("")
+      setClassId("")
+    } catch (error) {
+      console.error("Failed to create subject:", error)
+    } finally {
+      setCreating(false)
+    }
   }
+
+  const isValid = name.trim() && code.trim() && classId
 
   return (
     <div className="max-w-xl space-y-4">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Create Subject</h1>
-        <p className="text-muted-foreground mt-2">
+        <h1 className="text-3xl font-bold tracking-tight">
+          Create Subject
+        </h1>
+
+        <p className="mt-2 text-muted-foreground">
           Add a subject to a specific class.
         </p>
       </div>
@@ -53,18 +105,27 @@ export default function SubjectsAdmin() {
           <Input
             placeholder="Subject name"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(event) => setName(event.target.value)}
           />
 
           <Input
             placeholder="Subject code (ADB)"
             value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            onChange={(event) =>
+              setCode(event.target.value.toUpperCase())
+            }
           />
 
-          <Select value={classId} onValueChange={setClassId}>
+          <Select
+            value={classId}
+            onValueChange={(value) => setClassId(value ?? "")}
+          >
             <SelectTrigger>
-              <SelectValue placeholder="Select class" />
+              <SelectValue
+                placeholder={
+                  loading ? "Loading classes..." : "Select class"
+                }
+              />
             </SelectTrigger>
 
             <SelectContent>
@@ -76,8 +137,12 @@ export default function SubjectsAdmin() {
             </SelectContent>
           </Select>
 
-          <Button onClick={createSubject} className="w-full">
-            Create Subject
+          <Button
+            onClick={createSubject}
+            disabled={!isValid || creating}
+            className="w-full"
+          >
+            {creating ? "Creating..." : "Create Subject"}
           </Button>
         </CardContent>
       </Card>
