@@ -101,7 +101,7 @@ export default function Subjects() {
         year,
       })
 
-      const url = `${API}/api/admin/subjects?${params.toString()}`
+      const url = `${API}/api/subjects?${params.toString()}`
 
       console.log("Loading subjects:", url)
 
@@ -123,13 +123,14 @@ export default function Subjects() {
         throw new Error(message)
       }
 
-      const data: unknown = await response.json()
+      const data = await response.json()
+      const subjectsArray = Array.isArray(data) ? data : (Array.isArray(data?.subjects) ? data.subjects : null)
 
-      if (!Array.isArray(data)) {
+      if (!subjectsArray) {
         throw new Error("Invalid subjects response.")
       }
 
-      setSubjects(data as Subject[])
+      setSubjects(subjectsArray as Subject[])
     } catch (err) {
       console.error("Failed to load subjects:", err)
 

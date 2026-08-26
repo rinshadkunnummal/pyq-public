@@ -1,8 +1,9 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
+import { API_URL } from "../lib/api";
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: (username: string, password: string) => boolean;
+  login: (password: string) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -13,19 +14,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.getItem("admin_authed") === "true"
   );
 
-  const login = (username: string, password: string) => {
-    const validUsername = import.meta.env.VITE_ADMIN_USERNAME;
-    const validPassword = import.meta.env.VITE_ADMIN_PASSWORD;
+  const login = async (password: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/admin/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ password }),
+        credentials: "include",
+      });
 
-    if (username === validUsername && password === validPassword) {
-      localStorage.setItem("admin_authed", "true");
-      setIsAuthenticated(true);
-      return true;
+      if (res.ok) {
+        localStorage.setItem("admin_authed", "true");
+        setIsAuthenticated(true);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error(err);
+      return false;
     }
-    return false;
   };
 
   const logout = () => {
+    // In a real app we'd also call a logout endpoint to clear the cookie
     localStorage.removeItem("admin_authed");
     setIsAuthenticated(false);
   };

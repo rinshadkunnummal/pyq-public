@@ -1,51 +1,56 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  FileClock,
+  AlertTriangle,
   CheckCircle2,
   Files,
-  Download,
   ArrowRight,
-  Upload,
 } from 'lucide-react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
 import { Badge } from '../../components/ui/badge'
-// import { Button } from '../../components/ui/button'
 import Breadcrumbs from '../../components/Breadcrumbs'
+import { API_URL } from '../../lib/api'
 
 type Paper = {
   id: string
   title: string
   examYear: number
-  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  paperType: string
+  reportCount: number
   createdAt: string
   subject?: {
+    id: string
     code: string
     name: string
-    classLevel?: {
-      name: string
-      examType?: {
-        name: string
-      }
-    }
+    stage: string
+    year: number
   }
 }
 
-const API = ''
-
 export default function Dashboard() {
-  const [papers, setPapers] = useState<Paper[]>([])
+  const [totalPapers, setTotalPapers] = useState(0)
+  const [reportedPapers, setReportedPapers] = useState<Paper[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`${API}/api/admin/papers`)
-        if (!res.ok) throw new Error()
+        const [papersRes, reportedRes] = await Promise.all([
+          fetch(`${API_URL}/api/papers`),
+          fetch(`${API_URL}/api/admin/papers/reported`, { credentials: 'include' })
+        ])
+        
+        if (papersRes.ok) {
+          const papersData = await papersRes.json()
+          const arr = Array.isArray(papersData) ? papersData : Array.isArray(papersData.papers) ? papersData.papers : []
+          setTotalPapers(arr.length)
+        }
 
-        const data = await res.json()
-        setPapers(data)
+        if (reportedRes.ok) {
+          const reportedData = await reportedRes.json()
+          setReportedPapers(Array.isArray(reportedData) ? reportedData : [])
+        }
       } catch (err) {
         console.error(err)
       } finally {
@@ -57,44 +62,37 @@ export default function Dashboard() {
   }, [])
 
   const stats = useMemo(() => {
-    const pending = papers.filter((p) => p.status === 'PENDING')
-    const approved = papers.filter((p) => p.status === 'APPROVED')
-
     return {
-      total: papers.length,
-      pending: pending.length,
-      approved: approved.length,
+      total: totalPapers,
+      reported: reportedPapers.length,
+      clean: Math.max(0, totalPapers - reportedPapers.length)
     }
-  }, [papers])
+  }, [totalPapers, reportedPapers])
 
-  const recentPapers = useMemo(
+  const recentReported = useMemo(
     () =>
-      [...papers]
-        .sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() -
-            new Date(a.createdAt).getTime()
-        )
+      [...reportedPapers]
+        .sort((a, b) => b.reportCount - a.reportCount)
         .slice(0, 5),
-    [papers]
+    [reportedPapers]
   )
 
   const statCards = [
     {
-      title: 'Pending review',
-      value: stats.pending,
-      icon: FileClock,
-      color: 'text-amber-600',
-      bg: 'bg-amber-100',
-      href: '/admin/pending',
+      title: 'Reported papers',
+      value: stats.reported,
+      icon: AlertTriangle,
+      color: 'text-red-600',
+      bg: 'bg-red-100',
+      href: '/admin/reported',
     },
     {
-      title: 'Approved',
-      value: stats.approved,
+      title: 'Clean papers',
+      value: stats.clean,
       icon: CheckCircle2,
       color: 'text-green-600',
       bg: 'bg-green-100',
-      href: '/admin/approved',
+      href: '/admin/papers',
     },
     {
       title: 'Total papers',
@@ -102,14 +100,6 @@ export default function Dashboard() {
       icon: Files,
       color: 'text-blue-600',
       bg: 'bg-blue-100',
-      href: '/admin/papers',
-    },
-    {
-      title: 'Downloads',
-      value: '—',
-      icon: Download,
-      color: 'text-violet-600',
-      bg: 'bg-violet-100',
       href: '/admin/papers',
     },
   ]
@@ -132,26 +122,19 @@ export default function Dashboard() {
             Dashboard
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Review submissions and manage the paper library.
+            Review community reports and manage the paper library.
           </p>
         </div>
 
         <div className="flex gap-3">
-          <a >
-            <Link to="/admin/pending">Review pending</Link>
-          </a>
-
-          <a >
-            <Link to="/admin/upload">
-              <Upload className="mr-2 h-4 w-4" />
-              Upload
-            </Link>
-          </a>
+          <Link to="/admin/reported" className="inline-flex items-center text-sm font-medium hover:underline">
+            Review reports
+          </Link>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {statCards.map((stat) => {
           const Icon = stat.icon
 
@@ -188,14 +171,14 @@ export default function Dashboard() {
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div>
-              <CardTitle>Recent submissions</CardTitle>
+              <CardTitle>Highly reported</CardTitle>
               <p className="mt-1 text-sm text-muted-foreground">
-                Latest uploaded papers
+                Papers with the most community reports
               </p>
             </div>
 
             <Link
-              to="/admin/papers"
+              to="/admin/reported"
               className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
             >
               View all
@@ -212,16 +195,16 @@ export default function Dashboard() {
                 />
               ))}
 
-            {!loading && recentPapers.length === 0 && (
+            {!loading && recentReported.length === 0 && (
               <div className="rounded-2xl border border-dashed p-10 text-center">
                 <p className="text-sm text-muted-foreground">
-                  No submissions yet.
+                  No reported papers.
                 </p>
               </div>
             )}
 
             {!loading &&
-              recentPapers.map((paper) => (
+              recentReported.map((paper) => (
                 <div
                   key={paper.id}
                   className="flex items-center justify-between rounded-2xl border p-4"
@@ -231,26 +214,17 @@ export default function Dashboard() {
                       <p className="truncate font-medium">
                         {paper.title}
                       </p>
-
-                      {paper.status === 'APPROVED' ? (
-                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-                          Approved
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">Pending</Badge>
-                      )}
+                      <Badge variant="destructive">{paper.reportCount} reports</Badge>
                     </div>
 
                     <p className="text-sm text-muted-foreground">
-                      {paper.subject?.classLevel?.examType?.name} • Class{' '}
-                      {paper.subject?.classLevel?.name} •{' '}
-                      {paper.subject?.code} • {paper.examYear}
+                      {paper.subject?.name} • {paper.subject?.stage} • {paper.examYear}
                     </p>
                   </div>
 
-                  <a >
-                    <Link to="/admin/pending">Review</Link>
-                  </a>
+                  <Link to="/admin/reported" className="text-sm font-medium text-blue-600 hover:underline">
+                    Review
+                  </Link>
                 </div>
               ))}
           </CardContent>
@@ -267,54 +241,30 @@ export default function Dashboard() {
 
           <CardContent className="space-y-3">
             <Link
-              to="/admin/pending"
+              to="/admin/reported"
               className="flex items-center justify-between rounded-2xl border p-4 hover:bg-muted/50"
             >
               <div>
-                <p className="font-medium">Review pending</p>
+                <p className="font-medium">Review reports</p>
                 <p className="text-sm text-muted-foreground">
-                  {stats.pending} awaiting approval
+                  {stats.reported} reported papers
                 </p>
               </div>
               <ArrowRight className="h-4 w-4 text-muted-foreground" />
             </Link>
 
             <Link
-              to="/admin/approved"
+              to="/admin/papers"
               className="flex items-center justify-between rounded-2xl border p-4 hover:bg-muted/50"
             >
               <div>
-                <p className="font-medium">Approved papers</p>
+                <p className="font-medium">All papers</p>
                 <p className="text-sm text-muted-foreground">
-                  Browse approved library
+                  Browse library
                 </p>
               </div>
               <ArrowRight className="h-4 w-4 text-muted-foreground" />
             </Link>
-
-            <Link
-              to="/admin/upload"
-              className="flex items-center justify-between rounded-2xl border p-4 hover:bg-muted/50"
-            >
-              <div>
-                <p className="font-medium">Upload paper</p>
-                <p className="text-sm text-muted-foreground">
-                  Add a new question paper
-                </p>
-              </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground" />
-            </Link>
-
-            <div className="rounded-2xl bg-muted p-4">
-              <p className="font-medium">Library health</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {stats.total === 0
-                  ? 'No papers available yet.'
-                  : `${Math.round(
-                      (stats.approved / Math.max(stats.total, 1)) * 100
-                    )}% of submissions are approved.`}
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>

@@ -13,9 +13,8 @@ import Papers from "./pages/Papers"
 
 import Login from "./pages/admin/Login"
 import SubjectsAdmin from "./pages/admin/Subjects"
-import Approved from "./pages/admin/Approved"
 import AdminDashboard from "./pages/admin/Dashboard"
-import Pending from "./pages/admin/Pending"
+import Reported from "./pages/admin/Reported"
 import AdminPapers from "./pages/admin/AdminPapers"
 
 import ProtectedRoute from "./auth/ProtectedRoute"
@@ -140,13 +139,8 @@ export const router = createBrowserRouter([
           },
 
           {
-            path: "pending",
-            element: <Pending />,
-          },
-
-          {
-            path: "approved",
-            element: <Approved />,
+            path: "reported",
+            element: <Reported />,
           },
 
           /*

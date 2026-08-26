@@ -6,11 +6,23 @@ import {
   RefreshCw,
   ExternalLink,
   Download,
+  Flag,
 } from "lucide-react"
 
+import { API_URL } from "../lib/api"
 import { Button } from "../components/ui/button"
 import { Card, CardContent } from "../components/ui/card"
 import { Skeleton } from "../components/ui/skeleton"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog"
+import { Input } from "../components/ui/input"
+import { Label } from "../components/ui/label"
 
 type Paper = {
   id: string
@@ -20,10 +32,10 @@ type Paper = {
   pdfUrl: string
   fileSize?: number | null
   status: string
+  reportCount: number
   subjectId: string
   uploaderName?: string | null
   createdAt?: string
-  approvedAt?: string | null
   subject?: {
     id: string
     name: string
@@ -31,11 +43,8 @@ type Paper = {
     stage: string
     year: number
   }
+  _reportedByMe?: boolean // Frontend-only tracking
 }
-
-const API =
-  import.meta.env.VITE_API_URL ||
-  "https://special-space-umbrella-v67vvq5prw5hpqjg-3000.app.github.dev"
 
 const yearMap: Record<string, string> = {
   "first-year": "First Year",
@@ -59,6 +68,46 @@ export default function Papers() {
   const [papers, setPapers] = useState<Paper[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+
+  const [reportingId, setReportingId] = useState<string | null>(null)
+  const [reportReason, setReportReason] = useState("")
+  const [reportLoading, setReportLoading] = useState(false)
+  const [reportError, setReportError] = useState("")
+
+  const submitReport = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!reportingId) return
+
+    setReportLoading(true)
+    setReportError("")
+
+    try {
+      const res = await fetch(`${API_URL}/api/papers/${reportingId}/report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: reportReason.trim() || undefined }),
+      })
+
+      if (!res.ok) {
+        if (res.status === 409) {
+          throw new Error("You have already reported this paper.")
+        }
+        throw new Error("Failed to report paper.")
+      }
+
+      setPapers((prev) =>
+        prev.map((p) =>
+          p.id === reportingId ? { ...p, _reportedByMe: true } : p
+        )
+      )
+      setReportingId(null)
+      setReportReason("")
+    } catch (err) {
+      setReportError(err instanceof Error ? err.message : "Something went wrong")
+    } finally {
+      setReportLoading(false)
+    }
+  }
 
   const loadPapers = useCallback(async () => {
     if (!stage || !year || !subject) return
@@ -86,7 +135,7 @@ export default function Papers() {
         subject,
       })
 
-      const res = await fetch(`${API}/api/papers?${params.toString()}`)
+      const res = await fetch(`${API_URL}/api/papers?${params.toString()}`)
 
       if (!res.ok) {
         throw new Error("Unable to load papers.")
@@ -296,7 +345,7 @@ export default function Papers() {
                 </h3>
 
                 <p className="mt-1 text-sm text-muted-foreground">
-                  There are no approved question papers for this subject yet.
+                  There are no question papers for this subject yet.
                 </p>
 
                 <Button
@@ -357,6 +406,17 @@ export default function Papers() {
 
                       <div className="flex gap-2">
                         <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Report paper"
+                          onClick={() => setReportingId(paper.id)}
+                          disabled={paper._reportedByMe}
+                          className={paper._reportedByMe ? "text-destructive opacity-50" : "text-muted-foreground hover:text-destructive"}
+                        >
+                          <Flag className="h-4 w-4" />
+                        </Button>
+
+                        <Button
                           variant="outline"
                           onClick={() =>
                             window.open(
@@ -402,6 +462,42 @@ export default function Papers() {
             Back to {yearName}
           </Link>
         </div>
+
+        {/* Report Dialog */}
+        <Dialog open={!!reportingId} onOpenChange={(open) => !open && setReportingId(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Report Paper</DialogTitle>
+              <DialogDescription>
+                Help keep the community clean. Let us know if this paper is inappropriate, low quality, or incorrect.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={submitReport}>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reason">Reason (optional)</Label>
+                  <Input
+                    id="reason"
+                    placeholder="e.g. Blurry scan, wrong subject"
+                    value={reportReason}
+                    onChange={(e) => setReportReason(e.target.value)}
+                  />
+                </div>
+                {reportError && (
+                  <p className="text-sm text-destructive">{reportError}</p>
+                )}
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setReportingId(null)} disabled={reportLoading}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={reportLoading}>
+                  {reportLoading ? "Reporting..." : "Submit Report"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   )

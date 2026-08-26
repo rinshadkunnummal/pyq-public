@@ -1,7 +1,7 @@
 import { useState } from "react"
 import type { FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
-import { ShieldCheck, Lock, User } from "lucide-react"
+import { ShieldCheck, Lock } from "lucide-react"
 
 import { useAuth } from "../../auth/AuthContext"
 
@@ -17,7 +17,6 @@ import {
 } from "../../components/ui/card"
 
 export default function AdminLogin() {
-  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -30,12 +29,12 @@ export default function AdminLogin() {
     setError(null)
     setLoading(true)
 
-    const success = login(username, password)
+    const success = await login(password)
 
     if (success) {
       navigate("/admin")
     } else {
-      setError("Invalid username or password")
+      setError("Invalid password")
       setLoading(false)
     }
   }
@@ -67,29 +66,6 @@ export default function AdminLogin() {
 
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <label
-                  htmlFor="username"
-                  className="text-sm font-medium text-zinc-700"
-                >
-                  Username
-                </label>
-
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-
-                  <Input
-                    id="username"
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Enter your username"
-                    className="h-11 pl-9"
-                    required
-                  />
-                </div>
-              </div>
-
               <div className="space-y-2">
                 <label
                   htmlFor="password"
