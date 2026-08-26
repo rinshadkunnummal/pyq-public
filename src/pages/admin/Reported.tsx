@@ -19,7 +19,7 @@ type Report = {
   id: string
   reason: string
   createdAt: string
-  ipAddress: string
+  ipHash: string
 }
 
 type Paper = {
@@ -48,6 +48,8 @@ export default function ReportedPapers() {
   const [dismissingId, setDismissingId] = useState<string | null>(null)
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkLoading, setBulkLoading] = useState(false)
 
   useEffect(() => {
     fetchReported()
@@ -61,7 +63,7 @@ export default function ReportedPapers() {
       if (!res.ok) throw new Error('Failed to load reported papers')
       
       const data = await res.json()
-      setPapers(Array.isArray(data) ? data : [])
+      setPapers(Array.isArray(data) ? data : Array.isArray(data.papers) ? data.papers : [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -107,6 +109,38 @@ export default function ReportedPapers() {
     }
   }
 
+  const toggleSelect = (id: string) => {
+    const next = new Set(selectedIds)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    setSelectedIds(next)
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === papers.length) setSelectedIds(new Set())
+    else setSelectedIds(new Set(papers.map(p => p.id)))
+  }
+
+  const handleBulkAction = async (action: 'dismiss' | 'remove') => {
+    if (selectedIds.size === 0) return
+    if (!confirm(`Are you sure you want to ${action} ${selectedIds.size} selected papers?`)) return
+
+    setBulkLoading(true)
+    try {
+      const promises = Array.from(selectedIds).map(id =>
+        fetch(`${API_URL}/api/admin/papers/${id}/${action}`, {
+          method: 'POST',
+          credentials: 'include'
+        })
+      )
+      await Promise.allSettled(promises)
+      setPapers(prev => prev.filter(p => !selectedIds.has(p.id)))
+      setSelectedIds(new Set())
+    } finally {
+      setBulkLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -118,13 +152,27 @@ export default function ReportedPapers() {
         />
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Reported papers</h1>
           <p className="mt-2 text-muted-foreground">
             {loading ? 'Loading...' : `${papers.length} paper${papers.length === 1 ? '' : 's'} reported by the community`}
           </p>
         </div>
+
+        {selectedIds.size > 0 && (
+          <div className="flex items-center gap-2 bg-zinc-50 p-2 rounded-lg border shadow-sm">
+            <span className="text-sm font-medium px-2 text-muted-foreground">{selectedIds.size} selected</span>
+            <Button variant="secondary" size="sm" onClick={() => handleBulkAction('dismiss')} disabled={bulkLoading}>
+              {bulkLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+              Dismiss
+            </Button>
+            <Button variant="destructive" size="sm" onClick={() => handleBulkAction('remove')} disabled={bulkLoading}>
+              {bulkLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+              Delete
+            </Button>
+          </div>
+        )}
       </div>
 
       {error && (
@@ -148,9 +196,18 @@ export default function ReportedPapers() {
       )}
 
       <div className="grid gap-6">
+        {!loading && !error && papers.length > 0 && (
+          <label className="flex items-center gap-2 text-sm font-medium cursor-pointer px-1 w-fit">
+            <input type="checkbox" className="h-4 w-4 rounded border-gray-300" checked={selectedIds.size === papers.length} onChange={toggleSelectAll} />
+            Select All
+          </label>
+        )}
         {papers.map((paper) => (
-          <Card key={paper.id} className="border-red-100 shadow-sm">
-            <CardHeader className="bg-red-50/50 pb-4">
+          <Card key={paper.id} className="border-red-100 shadow-sm relative">
+            <div className="absolute top-4 right-4 z-10">
+              <input type="checkbox" className="h-5 w-5 rounded border-gray-300" checked={selectedIds.has(paper.id)} onChange={() => toggleSelect(paper.id)} />
+            </div>
+            <CardHeader className="bg-red-50/50 pb-4 pr-12">
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-1">
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -158,7 +215,7 @@ export default function ReportedPapers() {
                     {paper.title}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    {paper.subject?.name} • {paper.examYear} • {paper.paperType}
+                    {paper.subject?.name} • {paper.examYear} • {paper.paperType.replace(/_/g, ' ')}
                   </p>
                 </div>
                 <Badge variant="destructive">{paper.reportCount} reports</Badge>
@@ -170,7 +227,7 @@ export default function ReportedPapers() {
                 <div className="space-y-2">
                   {paper.reports?.map((report, i) => (
                     <div key={report.id || i} className="text-sm bg-muted rounded-md p-3">
-                      <span className="font-medium">User {report.ipAddress}:</span> {report.reason || 'No reason provided'}
+                      <span className="font-medium">User {report.ipHash.slice(0, 8)}:</span> {report.reason || 'No reason provided'}
                     </div>
                   ))}
                 </div>

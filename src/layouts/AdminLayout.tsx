@@ -4,7 +4,7 @@ import { useAuth } from "../auth/AuthContext"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Separator } from "../components/ui/separator"
-import { LayoutDashboard, FileClock, CheckCircle2, LogOut, Files } from "lucide-react"
+import { LayoutDashboard, LogOut, Files, AlertTriangle, BookOpen } from "lucide-react"
 
 export default function AdminLayout() {
   const { logout } = useAuth()
@@ -23,24 +23,19 @@ export default function AdminLayout() {
       icon: LayoutDashboard,
     },
     {
-      label: "Subjects",
-      href: "/admin/subjects",
+      label: "Reported",
+      href: "/admin/reported",
+      icon: AlertTriangle,
+    },
+    {
+      label: "Library",
+      href: "/admin/papers",
       icon: Files,
     },
     {
-      label: "Pending",
-      href: "/admin/pending",
-      icon: FileClock,
-    },
-    {
-      label: "Approved",
-      href: "/admin/approved",
-      icon: CheckCircle2,
-    },
-    {
-      label: "Classes",
-      href: "/admin/classes",
-      icon: CheckCircle2,
+      label: "Subjects",
+      href: "/admin/subjects",
+      icon: BookOpen,
     },
   ]
 
