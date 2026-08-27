@@ -11,6 +11,7 @@ import {
   PlusCircle,
   CloudUpload,
 } from "lucide-react"
+import { upload } from "@vercel/blob/client"
 
 import { Input } from "../components/ui/input"
 import { Label } from "../components/ui/label"
@@ -210,18 +211,29 @@ export default function Submit() {
     setSubmitting(true)
 
     try {
-      const formData = new FormData()
-      formData.append("subjectId", subjectId)
-      formData.append("title", title.trim())
-      formData.append("examYear", String(parsedExamYear))
-      formData.append("paperType", paperType)
-      formData.append("uploaderName", uploaderName.trim())
-      if (uploaderEmail.trim()) formData.append("uploaderEmail", uploaderEmail.trim())
-      formData.append("file", file)
+      // 1. Upload the file to Vercel Blob
+      const blob = await upload(file.name, file, {
+        access: 'public',
+        handleUploadUrl: `${API_URL}/api/upload/token`,
+      })
+
+      // 2. Send the metadata and the resulting URL to the backend
+      const payload = {
+        subjectId,
+        title: title.trim(),
+        examYear: parsedExamYear,
+        paperType,
+        uploaderName: uploaderName.trim(),
+        uploaderEmail: uploaderEmail.trim() || undefined,
+        pdfUrl: blob.url,
+      }
 
       const res = await fetch(`${API_URL}/api/upload`, {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       })
 
       const data = await res.json().catch(() => null)
