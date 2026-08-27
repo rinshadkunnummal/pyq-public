@@ -132,7 +132,7 @@ export default function Papers() {
       const params = new URLSearchParams({
         stage,
         year: String(yearNumber),
-        subject,
+        subjectId: subject,
       })
 
       const res = await fetch(`${API_URL}/api/papers?${params.toString()}`)
