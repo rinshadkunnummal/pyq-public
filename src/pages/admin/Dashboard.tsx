@@ -49,7 +49,8 @@ export default function Dashboard() {
 
         if (reportedRes.ok) {
           const reportedData = await reportedRes.json()
-          setReportedPapers(Array.isArray(reportedData) ? reportedData : [])
+          const arr = Array.isArray(reportedData) ? reportedData : Array.isArray(reportedData.papers) ? reportedData.papers : []
+          setReportedPapers(arr)
         }
       } catch (err) {
         console.error(err)
