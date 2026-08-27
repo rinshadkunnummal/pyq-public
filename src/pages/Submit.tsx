@@ -242,7 +242,6 @@ export default function Submit() {
       }
 
       setSuccess(true)
-      setTimeout(() => navigate("/"), 1800)
     } catch (err) {
       console.error(err)
       setError(err instanceof Error ? err.message : "Something went wrong while submitting the paper.")
@@ -265,10 +264,16 @@ export default function Submit() {
             <p className="mt-3 max-w-md text-base text-muted-foreground">
               Thanks for contributing to the archive. Your paper is now live and available for everyone to see.
             </p>
-            <p className="mt-8 flex items-center text-sm font-medium text-muted-foreground animate-pulse">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Redirecting to home...
-            </p>
+            <Button
+              className="mt-8"
+              onClick={() => {
+                setSuccess(false)
+                setTitle("")
+                setFile(null)
+              }}
+            >
+              Upload Another Paper
+            </Button>
           </CardContent>
         </Card>
       </div>
