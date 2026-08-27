@@ -14,7 +14,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "https://pyq-public.vercel.app",
+        target: "https://pyq-backend.vercel.app",
         changeOrigin: true,
       },
     },
