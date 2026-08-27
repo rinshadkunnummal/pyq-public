@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import type { FormEvent } from "react"
-import { useNavigate } from "react-router-dom"
+// import { useNavigate } from "react-router-dom"
 import {
   CheckCircle2,
   FileText,
@@ -78,7 +78,7 @@ const PAPER_TYPES = [
 ]
 
 export default function Submit() {
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
 
   // Form State
   const [stage, setStage] = useState("")
